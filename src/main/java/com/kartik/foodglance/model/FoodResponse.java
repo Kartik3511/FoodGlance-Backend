@@ -18,4 +18,28 @@ public class FoodResponse {
     private String carbs;
     private String fat;
     private String confidence;
+
+    // Compression details
+    @JsonProperty("original_image_size_kb")
+    private long originalImageSizeKB;
+
+    @JsonProperty("compressed_image_size_kb")
+    private long compressedImageSizeKB;
+
+    @JsonProperty("compression_ratio")
+    private String compressionRatio;
+
+    // Processing times
+    @JsonProperty("compression_time_ms")
+    private long compressionTimeMs;
+
+    @JsonProperty("vision_time_ms")
+    private long visionTimeMs;
+
+    @JsonProperty("nutrition_time_ms")
+    private long nutritionTimeMs;
+
+    @JsonProperty("total_time_ms")
+    private long totalTimeMs;
 }
+

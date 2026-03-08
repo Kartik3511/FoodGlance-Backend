@@ -1,11 +1,16 @@
 package com.kartik.foodglance.controller;
 
+import com.kartik.foodglance.model.CompressionResult;
+import com.kartik.foodglance.model.ErrorResponse;
 import com.kartik.foodglance.model.FoodResponse;
 import com.kartik.foodglance.model.NutritionData;
 import com.kartik.foodglance.model.VisionResult;
 import com.kartik.foodglance.service.ImageCompressionService;
 import com.kartik.foodglance.service.NutritionService;
 import com.kartik.foodglance.service.VisionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class FoodController {
+
+    private static final Logger log = LoggerFactory.getLogger(FoodController.class);
+    private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private final VisionService visionService;
     private final NutritionService nutritionService;
@@ -27,21 +35,59 @@ public class FoodController {
     }
 
     @PostMapping(value = "/detect-food", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<FoodResponse> detectFood(
+    public ResponseEntity<?> detectFood(
             @RequestParam("image") MultipartFile image) {
 
+        if (image.getSize() > MAX_IMAGE_SIZE) {
+            return ResponseEntity
+                    .status(HttpStatus.PAYLOAD_TOO_LARGE)
+                    .body(new ErrorResponse(
+                            413,
+                            "Payload Too Large",
+                            "Image exceeds the 5MB limit. Please upload a smaller image."
+                    ));
+        }
+
+        long totalStart = System.currentTimeMillis();
+
         try {
-            byte[] imageBytes = imageCompressionService.compressImage(image);
-            VisionResult vision = visionService.detectFoodLabel(imageBytes);
+            // Step 1: Compress image
+            long t1 = System.currentTimeMillis();
+            CompressionResult compression = imageCompressionService.compressImage(image);
+            long compressionMs = System.currentTimeMillis() - t1;
+
+            // Step 2: Vision API
+            long t2 = System.currentTimeMillis();
+            VisionResult vision = visionService.detectFoodLabel(compression.bytes);
+            long visionMs = System.currentTimeMillis() - t2;
+
+            // Step 3: USDA Nutrition API
+            long t3 = System.currentTimeMillis();
             NutritionData nutrition = nutritionService.getNutrition(vision.label);
-            return ResponseEntity.ok(new FoodResponse(
-                    vision.label,
-                    nutrition.getCalories(),
-                    nutrition.getProtein(),
-                    nutrition.getCarbs(),
-                    nutrition.getFat(),
-                    vision.confidence + "%"
-            ));
+            long nutritionMs = System.currentTimeMillis() - t3;
+
+            long totalMs = System.currentTimeMillis() - totalStart;
+
+            log.info("Pipeline timing — compression: {}ms | vision: {}ms | nutrition: {}ms | total: {}ms",
+                    compressionMs, visionMs, nutritionMs, totalMs);
+
+            FoodResponse response = new FoodResponse();
+            response.setFoodName(vision.label);
+            response.setCalories(nutrition.getCalories());
+            response.setProtein(nutrition.getProtein());
+            response.setCarbs(nutrition.getCarbs());
+            response.setFat(nutrition.getFat());
+            response.setConfidence(vision.confidence + "%");
+            response.setOriginalImageSizeKB(compression.originalSizeKB);
+            response.setCompressedImageSizeKB(compression.compressedSizeKB);
+            response.setCompressionRatio(compression.compressionRatio + "%");
+            response.setCompressionTimeMs(compressionMs);
+            response.setVisionTimeMs(visionMs);
+            response.setNutritionTimeMs(nutritionMs);
+            response.setTotalTimeMs(totalMs);
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
@@ -49,17 +95,17 @@ public class FoodController {
     }
 
     @GetMapping("/nutrition")
-    public ResponseEntity<FoodResponse> getNutrition(@RequestParam("food") String food) {
+    public ResponseEntity<?> getNutrition(@RequestParam("food") String food) {
         try {
             NutritionData nutrition = nutritionService.getNutrition(food);
-            return ResponseEntity.ok(new FoodResponse(
-                    food,
-                    nutrition.getCalories(),
-                    nutrition.getProtein(),
-                    nutrition.getCarbs(),
-                    nutrition.getFat(),
-                    "—"
-            ));
+            FoodResponse response = new FoodResponse();
+            response.setFoodName(food);
+            response.setCalories(nutrition.getCalories());
+            response.setProtein(nutrition.getProtein());
+            response.setCarbs(nutrition.getCarbs());
+            response.setFat(nutrition.getFat());
+            response.setConfidence("—");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();

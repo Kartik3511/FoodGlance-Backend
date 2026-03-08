@@ -1,5 +1,6 @@
 package com.kartik.foodglance.service;
 
+import com.kartik.foodglance.model.CompressionResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class ImageCompressionService {
      * Accepts a MultipartFile, resizes it to max 800px width (preserving aspect ratio),
      * compresses to JPEG at 0.7 quality, and returns the result as a byte array.
      */
-    public byte[] compressImage(MultipartFile file) throws IOException {
+    public CompressionResult compressImage(MultipartFile file) throws IOException {
         long originalBytes = file.getSize();
 
         BufferedImage original = ImageIO.read(file.getInputStream());
@@ -37,8 +38,8 @@ public class ImageCompressionService {
             throw new IOException("Could not decode image. Unsupported format or corrupted file.");
         }
 
-        BufferedImage resized = resizeIfNeeded(original);
-        byte[] compressed = encodeAsJpeg(resized);
+        BufferedImage resized  = resizeIfNeeded(original);
+        byte[]        compressed = encodeAsJpeg(resized);
 
         double originalKb    = originalBytes / 1024.0;
         double compressedKb  = compressed.length / 1024.0;
@@ -53,7 +54,7 @@ public class ImageCompressionService {
 
         log.info("Image compressed from {} to {} ({}% reduction)", originalStr, compressedStr, reductionPercent);
 
-        return compressed;
+        return new CompressionResult(compressed, originalBytes, compressed.length);
     }
 
     private BufferedImage resizeIfNeeded(BufferedImage image) {
