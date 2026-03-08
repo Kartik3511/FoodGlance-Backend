@@ -1,5 +1,7 @@
 package com.kartik.foodglance.filter;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import jakarta.servlet.FilterChain;
@@ -13,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class RateLimitFilter extends OncePerRequestFilter {
 
@@ -23,8 +25,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final int     MAX_REQUESTS      = 10;
     private static final Duration REFILL_PERIOD    = Duration.ofMinutes(1);
 
-    // One bucket per IP address — created lazily on first request
-    private final ConcurrentHashMap<String, Bucket> buckets = new ConcurrentHashMap<>();
+    // One bucket per IP — expires 1 hour after last access, so memory doesn't grow forever
+    private final Cache<String, Bucket> buckets = Caffeine.newBuilder()
+            .expireAfterAccess(1, TimeUnit.HOURS)
+            .build();
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -33,7 +37,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String ip = getClientIp(request);
-        Bucket bucket = buckets.computeIfAbsent(ip, this::newBucket);
+        Bucket bucket = buckets.get(ip, this::newBucket);
 
         if (bucket.tryConsume(1)) {
             chain.doFilter(request, response);
