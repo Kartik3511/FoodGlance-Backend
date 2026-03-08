@@ -1,0 +1,18 @@
+spring.application.name=FoodGlance
+
+# Use PORT env variable if set (required by cloud platforms like Railway, Render)
+server.port=${PORT:8080}
+
+# Allow large image uploads (up to 10 MB)
+spring.servlet.multipart.max-file-size=10MB
+spring.servlet.multipart.max-request-size=10MB
+
+# Google Cloud Vision API key
+# Set GOOGLE_VISION_API_KEY environment variable on your cloud platform
+# Locally: replace the default value after the colon
+google.vision.api-key=${GOOGLE_VISION_API_KEY:YOUR_GOOGLE_VISION_API_KEY}
+
+# USDA FoodData Central API key
+# Set USDA_API_KEY environment variable on your cloud platform
+# Use DEMO_KEY for development (30 requests/hour)
+usda.api-key=${USDA_API_KEY:DEMO_KEY}
