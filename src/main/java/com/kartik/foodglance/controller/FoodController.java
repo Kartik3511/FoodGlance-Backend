@@ -3,6 +3,7 @@ package com.kartik.foodglance.controller;
 import com.kartik.foodglance.model.FoodResponse;
 import com.kartik.foodglance.model.NutritionData;
 import com.kartik.foodglance.model.VisionResult;
+import com.kartik.foodglance.service.ImageCompressionService;
 import com.kartik.foodglance.service.NutritionService;
 import com.kartik.foodglance.service.VisionService;
 import org.springframework.http.MediaType;
@@ -15,10 +16,14 @@ public class FoodController {
 
     private final VisionService visionService;
     private final NutritionService nutritionService;
+    private final ImageCompressionService imageCompressionService;
 
-    public FoodController(VisionService visionService, NutritionService nutritionService) {
-        this.visionService    = visionService;
-        this.nutritionService = nutritionService;
+    public FoodController(VisionService visionService,
+                          NutritionService nutritionService,
+                          ImageCompressionService imageCompressionService) {
+        this.visionService           = visionService;
+        this.nutritionService        = nutritionService;
+        this.imageCompressionService = imageCompressionService;
     }
 
     @PostMapping(value = "/detect-food", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -26,7 +31,7 @@ public class FoodController {
             @RequestParam("image") MultipartFile image) {
 
         try {
-            byte[] imageBytes = image.getBytes();
+            byte[] imageBytes = imageCompressionService.compressImage(image);
             VisionResult vision = visionService.detectFoodLabel(imageBytes);
             NutritionData nutrition = nutritionService.getNutrition(vision.label);
             return ResponseEntity.ok(new FoodResponse(
