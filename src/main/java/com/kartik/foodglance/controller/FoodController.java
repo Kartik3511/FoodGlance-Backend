@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
@@ -39,7 +40,11 @@ public class FoodController {
 
     @PostMapping(value = "/detect-food", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> detectFood(
-            @RequestParam("image") MultipartFile image) {
+            @RequestParam("image") MultipartFile image,
+            HttpServletRequest request) {
+
+        String clientIp = getClientIp(request);
+        log.info("Food detection request from IP: {} | size: {}KB", clientIp, image.getSize() / 1024);
 
         if (image.getSize() > MAX_IMAGE_SIZE) {
             return ResponseEntity
@@ -98,16 +103,20 @@ public class FoodController {
     }
 
     @GetMapping("/foods/search")
-    public ResponseEntity<?> searchFoods(@RequestParam("q") String query) {
+    public ResponseEntity<?> searchFoods(@RequestParam("q") String query,
+                                         HttpServletRequest request) {
         if (query == null || query.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(new ErrorResponse(400, "Bad Request", "Query parameter 'q' must not be empty."));
         }
+        log.info("Food search request from IP: {} | query: \"{}\"", getClientIp(request), query);
         return ResponseEntity.ok(nutritionService.searchFoods(query));
     }
 
     @GetMapping("/nutrition")
-    public ResponseEntity<?> getNutrition(@RequestParam("food") String food) {
+    public ResponseEntity<?> getNutrition(@RequestParam("food") String food,
+                                          HttpServletRequest request) {
+        log.info("Nutrition request from IP: {} | food: \"{}\"", getClientIp(request), food);
         try {
             NutritionData nutrition = nutritionService.getNutrition(food);
             FoodResponse response = new FoodResponse();
@@ -132,6 +141,14 @@ public class FoodController {
     @GetMapping("/version")
     public String version() {
         return "FoodGlance Backend v1.0";
+    }
+
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }
 

@@ -34,7 +34,7 @@ public class NutritionService {
     @Autowired
     private RestTemplate restTemplate;
 
-    @Cacheable("food-search")
+    @Cacheable(value = "food-search", unless = "#result == null || #result.isEmpty()")
     public List<FoodSearchResult> searchFoods(String query) {
         List<FoodSearchResult> results = new ArrayList<>();
         try {
@@ -88,7 +88,7 @@ public class NutritionService {
         return results;
     }
 
-    @Cacheable("nutrition")
+    @Cacheable(value = "nutrition", unless = "#result == null")
     public NutritionData getNutrition(String foodName) {
         String cleanedName = cleanFoodName(foodName);
         try {
