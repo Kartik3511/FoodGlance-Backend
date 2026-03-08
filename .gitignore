@@ -32,7 +32,7 @@ build/
 ### VS Code ###
 .vscode/
 
-### Secrets — never commit real API keys ###
-src/main/resources/application.properties
+### Secrets ΓÇö never commit real API keys ###
+
 .env
 *.log
