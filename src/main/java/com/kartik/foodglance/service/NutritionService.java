@@ -1,5 +1,6 @@
 package com.kartik.foodglance.service;
 
+import com.kartik.foodglance.model.FoodSearchResult;
 import com.kartik.foodglance.model.NutritionData;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,59 @@ public class NutritionService {
 
     @Autowired
     private RestTemplate restTemplate;
+
+    public List<FoodSearchResult> searchFoods(String query) {
+        List<FoodSearchResult> results = new ArrayList<>();
+        try {
+            String encodedQuery = URLEncoder.encode(query.trim(), StandardCharsets.UTF_8);
+            String url = USDA_URL + "?query=" + encodedQuery
+                       + "&pageSize=5&api_key=" + apiKey;
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+
+            if (response == null) return results;
+
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> foods =
+                    (List<Map<String, Object>>) response.get("foods");
+
+            if (foods == null) return results;
+
+            for (Map<String, Object> food : foods) {
+                Object nameObj = food.get("description");
+                if (nameObj == null) continue;
+
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> nutrients =
+                        (List<Map<String, Object>>) food.get("foodNutrients");
+
+                String calories = "0", protein = "0", carbs = "0", fat = "0";
+
+                if (nutrients != null) {
+                    for (Map<String, Object> nutrient : nutrients) {
+                        Object idObj  = nutrient.get("nutrientId");
+                        Object valObj = nutrient.get("value");
+                        if (idObj == null || valObj == null) continue;
+
+                        int id = Integer.parseInt(idObj.toString());
+                        String val = formatNumber(valObj);
+
+                        if      (id == NUTRIENT_CALORIES) calories = val;
+                        else if (id == NUTRIENT_PROTEIN)  protein  = val;
+                        else if (id == NUTRIENT_CARBS)    carbs    = val;
+                        else if (id == NUTRIENT_FAT)      fat      = val;
+                    }
+                }
+
+                results.add(new FoodSearchResult(nameObj.toString(), calories, protein, carbs, fat));
+            }
+
+        } catch (Exception e) {
+            System.err.println("USDA search error for '" + query + "': " + e.getMessage());
+        }
+        return results;
+    }
 
     public NutritionData getNutrition(String foodName) {
         String cleanedName = cleanFoodName(foodName);

@@ -3,6 +3,7 @@ package com.kartik.foodglance.controller;
 import com.kartik.foodglance.model.CompressionResult;
 import com.kartik.foodglance.model.ErrorResponse;
 import com.kartik.foodglance.model.FoodResponse;
+import com.kartik.foodglance.model.FoodSearchResult;
 import com.kartik.foodglance.model.NutritionData;
 import com.kartik.foodglance.model.VisionResult;
 import com.kartik.foodglance.service.ImageCompressionService;
@@ -92,6 +93,15 @@ public class FoodController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/foods/search")
+    public ResponseEntity<?> searchFoods(@RequestParam("q") String query) {
+        if (query == null || query.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(new ErrorResponse(400, "Bad Request", "Query parameter 'q' must not be empty."));
+        }
+        return ResponseEntity.ok(nutritionService.searchFoods(query));
     }
 
     @GetMapping("/nutrition")

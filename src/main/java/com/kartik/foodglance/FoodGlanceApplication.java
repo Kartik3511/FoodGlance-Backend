@@ -1,8 +1,10 @@
 package com.kartik.foodglance;
 
+import com.kartik.foodglance.filter.RateLimitFilter;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,5 +24,13 @@ public class FoodGlanceApplication {
 	@Bean
 	public RestTemplate restTemplate() {
 		return new RestTemplate();
+	}
+
+	@Bean
+	public FilterRegistrationBean<RateLimitFilter> rateLimitFilter() {
+		FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>();
+		registration.setFilter(new RateLimitFilter());
+		registration.addUrlPatterns("/detect-food");
+		return registration;
 	}
 }
