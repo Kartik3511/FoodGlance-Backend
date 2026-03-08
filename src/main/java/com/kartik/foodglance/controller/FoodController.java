@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Map;
+
 @RestController
 public class FoodController {
 
@@ -120,6 +122,16 @@ public class FoodController {
             e.printStackTrace();
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/health")
+    public Map<String, String> health() {
+        return Map.of("status", "UP");
+    }
+
+    @GetMapping("/version")
+    public String version() {
+        return "FoodGlance Backend v1.0";
     }
 }
 
