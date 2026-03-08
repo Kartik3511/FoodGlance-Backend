@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.cache.annotation.Cacheable;
+
 @Service
 public class NutritionService {
 
@@ -32,6 +34,7 @@ public class NutritionService {
     @Autowired
     private RestTemplate restTemplate;
 
+    @Cacheable("food-search")
     public List<FoodSearchResult> searchFoods(String query) {
         List<FoodSearchResult> results = new ArrayList<>();
         try {
@@ -85,6 +88,7 @@ public class NutritionService {
         return results;
     }
 
+    @Cacheable("nutrition")
     public NutritionData getNutrition(String foodName) {
         String cleanedName = cleanFoodName(foodName);
         try {

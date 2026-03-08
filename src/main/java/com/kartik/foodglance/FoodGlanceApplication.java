@@ -8,7 +8,10 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.cache.annotation.EnableCaching;
+
 @SpringBootApplication
+@EnableCaching
 public class FoodGlanceApplication {
 
 	public static void main(String[] args) {
