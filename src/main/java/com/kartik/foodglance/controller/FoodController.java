@@ -69,6 +69,13 @@ public class FoodController {
             VisionResult vision = visionService.detectFoodLabel(compression.bytes);
             long visionMs = System.currentTimeMillis() - t2;
 
+            // Reject non-food images before hitting the nutrition API
+            if ("NOT_FOOD".equals(vision.label)) {
+                log.info("Non-food image detected — returning 422");
+                return ResponseEntity.unprocessableEntity()
+                        .body(Map.of("error", "No food detected. Please scan a food item."));
+            }
+
             // Step 3: USDA Nutrition API
             long t3 = System.currentTimeMillis();
             NutritionData nutrition = nutritionService.getNutrition(vision.label);

@@ -47,14 +47,22 @@ public class VisionService {
         "bhakri", "puri", "dosa", "idli", "vada", "upma", "poha"
     );
 
-    // Generic labels that are too vague — skip these
-    private static final Set<String> SKIP_LABELS = Set.of(
+    // Generic labels that are too vague to name a food, but still CONFIRM food is present.
+    // If any of these appear, we should NOT reject the image as non-food.
+    private static final Set<String> FOOD_CONTEXT_LABELS = Set.of(
         "food", "dish", "meal", "cuisine", "ingredient", "recipe",
-        "produce", "tableware", "plate", "table", "bowl", "cup",
+        "produce", "fast food", "comfort food", "finger food",
+        "junk food", "staple food", "whole food", "superfood",
+        "garnish", "condiment", "snack"
+    );
+
+    // Non-food objects — only skip these for the purpose of label selection,
+    // but their presence alone does NOT mean the image has no food.
+    private static final Set<String> SKIP_LABELS = Set.of(
+        "tableware", "plate", "table", "bowl", "cup",
         "glass", "fork", "knife", "spoon", "cutlery", "serveware",
-        "dishware", "drinkware", "fast food", "comfort food",
-        "finger food", "junk food", "staple food", "whole food",
-        "superfood", "garnish", "condiment", "flavor", "taste",
+        "dishware", "drinkware",
+        "flavor", "taste",
         "texture", "color", "pattern", "wood", "surface", "background",
         "food storage containers", "food storage container",
         "container", "storage", "packaging", "plastic", "ceramic",
@@ -158,17 +166,31 @@ public class VisionService {
                 Object scoreObj = label.get("score");
                 if (descObj == null) continue;
                 String lower = descObj.toString().toLowerCase();
-                if (!SKIP_LABELS.contains(lower)) {
+                if (!SKIP_LABELS.contains(lower) && !FOOD_CONTEXT_LABELS.contains(lower)) {
                     return new VisionResult(applyFoodNameMap(descObj.toString()), toPercent(scoreObj));
                 }
             }
 
-            // Fallback: return the highest-confidence label as-is
-            Object fallback  = labels.get(0).get("description");
-            Object scoreObj  = labels.get(0).get("score");
-            return fallback != null
-                ? new VisionResult(applyFoodNameMap(fallback.toString()), toPercent(scoreObj))
-                : new VisionResult("Unknown Food", 0);
+            // Pass 3: if any label confirms food context (e.g. "dish", "meal"), food IS present
+            // even if we couldn't identify it specifically — don't reject the image.
+            for (Map<String, Object> label : labels) {
+                Object descObj = label.get("description");
+                if (descObj == null) continue;
+                if (FOOD_CONTEXT_LABELS.contains(descObj.toString().toLowerCase())) {
+                    // Use the first non-skip label as the best guess food name
+                    for (Map<String, Object> l2 : labels) {
+                        Object d = l2.get("description");
+                        Object s = l2.get("score");
+                        if (d == null) continue;
+                        if (!SKIP_LABELS.contains(d.toString().toLowerCase())) {
+                            return new VisionResult(applyFoodNameMap(d.toString()), toPercent(s));
+                        }
+                    }
+                }
+            }
+
+            // No food signals found at all — truly not a food image
+            return new VisionResult("NOT_FOOD", 0);
 
         } catch (HttpClientErrorException e) {
             System.err.println("Vision API error " + e.getStatusCode()
