@@ -19,6 +19,10 @@ public class FoodResponse {
     private String fat;
     private String confidence;
 
+    // Data source indicator: "ICMR" or "USDA"
+    @JsonProperty("data_source")
+    private String dataSource;
+
     // Compression details
     @JsonProperty("original_image_size_kb")
     private long originalImageSizeKB;

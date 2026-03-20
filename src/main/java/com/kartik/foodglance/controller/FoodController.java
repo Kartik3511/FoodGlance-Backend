@@ -7,7 +7,7 @@ import com.kartik.foodglance.model.FoodSearchResult;
 import com.kartik.foodglance.model.NutritionData;
 import com.kartik.foodglance.model.VisionResult;
 import com.kartik.foodglance.service.ImageCompressionService;
-import com.kartik.foodglance.service.NutritionService;
+import com.kartik.foodglance.service.HybridNutritionService;
 import com.kartik.foodglance.service.VisionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,14 +27,14 @@ public class FoodController {
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
     private final VisionService visionService;
-    private final NutritionService nutritionService;
+    private final HybridNutritionService hybridNutritionService;
     private final ImageCompressionService imageCompressionService;
 
     public FoodController(VisionService visionService,
-                          NutritionService nutritionService,
+                          HybridNutritionService hybridNutritionService,
                           ImageCompressionService imageCompressionService) {
         this.visionService           = visionService;
-        this.nutritionService        = nutritionService;
+        this.hybridNutritionService  = hybridNutritionService;
         this.imageCompressionService = imageCompressionService;
     }
 
@@ -76,9 +76,9 @@ public class FoodController {
                         .body(Map.of("error", "No food detected. Please scan a food item."));
             }
 
-            // Step 3: USDA Nutrition API
+            // Step 3: Hybrid Nutrition Lookup (ICMR → USDA)
             long t3 = System.currentTimeMillis();
-            NutritionData nutrition = nutritionService.getNutrition(vision.label);
+            NutritionData nutrition = hybridNutritionService.getNutrition(vision.label);
             long nutritionMs = System.currentTimeMillis() - t3;
 
             long totalMs = System.currentTimeMillis() - totalStart;
@@ -93,6 +93,7 @@ public class FoodController {
             response.setCarbs(nutrition.getCarbs());
             response.setFat(nutrition.getFat());
             response.setConfidence(vision.confidence + "%");
+            response.setDataSource(nutrition.getSource());  // NEW: Add data source
             response.setOriginalImageSizeKB(compression.originalSizeKB);
             response.setCompressedImageSizeKB(compression.compressedSizeKB);
             response.setCompressionRatio(compression.compressionRatio + "%");
@@ -117,7 +118,7 @@ public class FoodController {
                     .body(new ErrorResponse(400, "Bad Request", "Query parameter 'q' must not be empty."));
         }
         log.info("Food search request from IP: {} | query: \"{}\"", getClientIp(request), query);
-        return ResponseEntity.ok(nutritionService.searchFoods(query));
+        return ResponseEntity.ok(hybridNutritionService.searchFoods(query));
     }
 
     @GetMapping("/nutrition")
@@ -125,7 +126,7 @@ public class FoodController {
                                           HttpServletRequest request) {
         log.info("Nutrition request from IP: {} | food: \"{}\"", getClientIp(request), food);
         try {
-            NutritionData nutrition = nutritionService.getNutrition(food);
+            NutritionData nutrition = hybridNutritionService.getNutrition(food);
             FoodResponse response = new FoodResponse();
             response.setFoodName(food);
             response.setCalories(nutrition.getCalories());
@@ -133,6 +134,7 @@ public class FoodController {
             response.setCarbs(nutrition.getCarbs());
             response.setFat(nutrition.getFat());
             response.setConfidence("—");
+            response.setDataSource(nutrition.getSource());  // NEW: Add data source
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();

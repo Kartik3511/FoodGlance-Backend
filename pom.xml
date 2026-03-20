@@ -36,6 +36,12 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
+		<!-- Jackson for JSON parsing (included in webmvc, but explicit for clarity) -->
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+		</dependency>
+
 		<!-- Reads .env file for local development -->
 		<dependency>
 			<groupId>io.github.cdimascio</groupId>
@@ -58,6 +64,13 @@
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>
+		</dependency>
+
+		<!-- Apache Commons Text for fuzzy matching (Levenshtein distance) -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>1.11.0</version>
 		</dependency>
 
 		<dependency>

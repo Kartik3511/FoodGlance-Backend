@@ -1,0 +1,108 @@
+{
+  "metadata": {
+    "source": "ICMR-NIN IFCT 2017",
+    "version": "2017 - Cleaned and Validated",
+    "extractedDate": "2026-03-20",
+    "totalFoods": 4,
+    "servingSizeStandard": "100g",
+    "energyUnit": "kcal",
+    "note": "Cleaned data with validated nutrients. Energy converted from kJ to kcal.",
+    "parsingStats": {
+      "totalRaw": 390,
+      "successfullyParsed": 4,
+      "skipped": 386
+    }
+  },
+  "foods": [
+    {
+      "id": "B022",
+      "name": "Red gram, whole (Cajanus cajan)",
+      "nameLocal": null,
+      "category": "Grain Legumes",
+      "names": [
+        "arhar",
+        "pigeon pea",
+        "red gram",
+        "red gram, whole (cajanus cajan)",
+        "toor"
+      ],
+      "servingSize": 100,
+      "servingUnit": "g",
+      "nutrients": {
+        "energy": 2,
+        "protein": 1.0,
+        "carbohydrate": 4.0,
+        "fat": 22.0,
+        "fiber": 20.0,
+        "water": 62.2,
+        "ash": 11.8
+      }
+    },
+    {
+      "id": "C010",
+      "name": "Betel leaves, big (kolkata) (Piper betle)",
+      "nameLocal": null,
+      "category": "Green Leafy Vegetables",
+      "names": [
+        "betel leaves",
+        "betel leaves, big (kolkata) (piper betle)"
+      ],
+      "servingSize": 100,
+      "servingUnit": "g",
+      "nutrients": {
+        "energy": 1,
+        "protein": 17.0,
+        "carbohydrate": 0.0,
+        "fat": 14.9,
+        "fiber": 26.0,
+        "water": 62.0,
+        "ash": 2.0
+      }
+    },
+    {
+      "id": "A022",
+      "name": "Wheat, semolina (Triticum aestivum)",
+      "nameLocal": null,
+      "category": "Cereals and Millets",
+      "names": [
+        "atta",
+        "gehun",
+        "wheat",
+        "wheat, semolina (triticum aestivum)"
+      ],
+      "servingSize": 100,
+      "servingUnit": "g",
+      "nutrients": {
+        "energy": 3,
+        "protein": 5.0,
+        "carbohydrate": 28.0,
+        "fat": 0.0,
+        "fiber": 3.0,
+        "water": 60.5,
+        "ash": 1.0
+      }
+    },
+    {
+      "id": "B004",
+      "name": "Black gram, whole (Phaseolus",
+      "nameLocal": null,
+      "category": "Grain Legumes",
+      "names": [
+        "black gram",
+        "black gram, whole (phaseolus",
+        "urad"
+      ],
+      "servingSize": 100,
+      "servingUnit": "g",
+      "nutrients": {
+        "energy": 20,
+        "protein": 17.0,
+        "carbohydrate": 12.4,
+        "fat": 4.0,
+        "fiber": 8.0,
+        "water": 60.0,
+        "ash": 0.0
+      }
+    }
+  ]
+}

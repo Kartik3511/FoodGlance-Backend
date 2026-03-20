@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "source": "ICMR-NIN IFCT 2017",
+    "version": "2017 - Cleaned and Validated",
+    "extractedDate": "2026-03-20",
+    "totalFoods": 0,
+    "servingSizeStandard": "100g",
+    "energyUnit": "kcal",
+    "note": "Cleaned data with validated nutrients. Energy converted from kJ to kcal.",
+    "parsingStats": {
+      "totalRaw": 26,
+      "successfullyParsed": 0,
+      "skipped": 26
+    }
+  },
+  "foods": []
+}
