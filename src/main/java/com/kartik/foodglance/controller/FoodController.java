@@ -8,7 +8,7 @@ import com.kartik.foodglance.model.NutritionData;
 import com.kartik.foodglance.model.VisionResult;
 import com.kartik.foodglance.service.ImageCompressionService;
 import com.kartik.foodglance.service.HybridNutritionService;
-import com.kartik.foodglance.service.VisionService;
+import com.kartik.foodglance.service.SpoonacularVisionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,16 +26,16 @@ public class FoodController {
     private static final Logger log = LoggerFactory.getLogger(FoodController.class);
     private static final long MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
-    private final VisionService visionService;
+    private final SpoonacularVisionService spoonacularVisionService;
     private final HybridNutritionService hybridNutritionService;
     private final ImageCompressionService imageCompressionService;
 
-    public FoodController(VisionService visionService,
+    public FoodController(SpoonacularVisionService spoonacularVisionService,
                           HybridNutritionService hybridNutritionService,
                           ImageCompressionService imageCompressionService) {
-        this.visionService           = visionService;
-        this.hybridNutritionService  = hybridNutritionService;
-        this.imageCompressionService = imageCompressionService;
+        this.spoonacularVisionService = spoonacularVisionService;
+        this.hybridNutritionService   = hybridNutritionService;
+        this.imageCompressionService  = imageCompressionService;
     }
 
     @PostMapping(value = "/detect-food", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -64,17 +64,19 @@ public class FoodController {
             CompressionResult compression = imageCompressionService.compressImage(image);
             long compressionMs = System.currentTimeMillis() - t1;
 
-            // Step 2: Vision API
+            // Step 2: Spoonacular Food Detection
             long t2 = System.currentTimeMillis();
-            VisionResult vision = visionService.detectFoodLabel(compression.bytes);
+            VisionResult vision = spoonacularVisionService.detectFood(compression.bytes);
             long visionMs = System.currentTimeMillis() - t2;
 
-            // Reject non-food images before hitting the nutrition API
+            // Check if food was detected
             if ("NOT_FOOD".equals(vision.label)) {
-                log.info("Non-food image detected — returning 422");
+                log.info("No food detected by Spoonacular — returning 422");
                 return ResponseEntity.unprocessableEntity()
                         .body(Map.of("error", "No food detected. Please scan a food item."));
             }
+
+            log.info("Spoonacular detected: {} ({}% confidence)", vision.label, vision.confidence);
 
             // Step 3: Hybrid Nutrition Lookup (ICMR → USDA)
             long t3 = System.currentTimeMillis();
@@ -93,7 +95,7 @@ public class FoodController {
             response.setCarbs(nutrition.getCarbs());
             response.setFat(nutrition.getFat());
             response.setConfidence(vision.confidence + "%");
-            response.setDataSource(nutrition.getSource());  // NEW: Add data source
+            response.setDataSource(nutrition.getSource());
             response.setOriginalImageSizeKB(compression.originalSizeKB);
             response.setCompressedImageSizeKB(compression.compressedSizeKB);
             response.setCompressionRatio(compression.compressionRatio + "%");
