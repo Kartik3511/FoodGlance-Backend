@@ -102,8 +102,12 @@ public class ClarifaiVisionService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Key " + apiKey);
             
-            // Clarifai request format
+            // Clarifai request format (requires user_app_id)
             Map<String, Object> requestBody = Map.of(
+                "user_app_id", Map.of(
+                    "user_id", "clarifai",
+                    "app_id", "main"
+                ),
                 "inputs", List.of(
                     Map.of(
                         "data", Map.of(
